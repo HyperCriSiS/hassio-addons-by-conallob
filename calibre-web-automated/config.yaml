@@ -22,7 +22,18 @@ options:
   library_dir: "calibre-web-automated/library"
   ingest_dir: "calibre-web-automated/ingest"
   network_share_mode: false
+  sso:
+    enabled: false
+    admin_users: []
+    admin_account: "admin"
+    auto_create_users: false
 schema:
   library_dir: "str"
   ingest_dir: "str"
   network_share_mode: "bool"
+  sso:
+    enabled: "bool"
+    admin_users:
+      - "match(^[0-9a-f]{32}$)"
+    admin_account: "str"
+    auto_create_users: "bool"

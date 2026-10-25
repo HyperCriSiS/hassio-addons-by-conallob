@@ -1,0 +1,44 @@
+name: CWA ingress SSO tests
+
+on:
+  pull_request:
+    paths:
+      - 'calibre-web-automated/**'
+      - '.github/workflows/cwa-sso-tests.yml'
+  push:
+    branches: ['feature/cwa-ingress-sso']
+    paths:
+      - 'calibre-web-automated/**'
+      - '.github/workflows/cwa-sso-tests.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch packaged CWA login library
+        uses: actions/checkout@v4
+        with:
+          repository: crocodilestick/Calibre-Web-Automated
+          ref: 1b80f9a74b3db1fe9b35978e38d2e62fcb6a7246 # v4.0.6
+          path: .cwa-test-source
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -r calibre-web-automated/tests/requirements.txt
+      - name: Install nginx and configure a simulated Supervisor source
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y nginx
+          sudo systemctl stop nginx
+          sudo ip addr add 172.30.32.2/32 dev lo
+      - name: Adapter and proxy regression tests
+        env:
+          CWA_TEST_NGINX: '1'
+          CWA_SOURCE: .cwa-test-source
+        run: python -m unittest discover -s calibre-web-automated/tests -v
+      - name: Check changed service shell syntax
+        run: bash -n calibre-web-automated/rootfs/etc/s6-overlay/s6-rc.d/svc-calibre-web-automated/run

@@ -32,6 +32,9 @@ http {
 
     server {
         listen 8084;
+        # Trust identity headers only from the Supervisor ingress gateway.
+        allow 172.30.32.2;
+        deny all;
 
         location / {
             proxy_pass http://127.0.0.1:8083;
@@ -40,6 +43,8 @@ http {
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Proto $scheme;
             proxy_set_header X-Script-Name __CWA_INGRESS_PATH__;
+            # Override client-supplied aliases; the adapter uses only HA's ID.
+            proxy_set_header X-CWA-Ingress "1";
             proxy_redirect off;
         }
     }

@@ -53,6 +53,64 @@ doesn't need to touch on the mount.
 
 Default: `false`
 
+### Option: `sso`
+
+Optional Home Assistant ingress-only authentication. Disabled by default;
+upgrading does not change the existing login or optional direct access.
+
+```yaml
+sso:
+  enabled: true
+  admin_users:
+    - "0123456789abcdef0123456789abcdef"
+  admin_account: "admin"
+  auto_create_users: true
+```
+
+- `enabled`: authenticate every request exclusively through HA ingress.
+  CWA then binds to `127.0.0.1:8083`; even a configured host port mapping
+  cannot expose that backend. Leave the optional network port unset.
+- `admin_users`: **Home Assistant user IDs, not usernames or display names**.
+  Find the ID in the user's detail view under Settings → People → Users
+  (advanced mode may be needed). The ID is 32 lowercase hexadecimal characters.
+  Supervisor supplies it as `X-Remote-User-Id`. IDs keep the binding stable
+  across renames and avoid granting access when a username is reused.
+  `X-Remote-User-Name` is deliberately not an authorization key.
+- `admin_account`: exact name of an **existing CWA administrator**. All
+  allowlisted HA IDs use this account. SSO does not create/promote this admin;
+  an invalid target prevents startup. Configure it with SSO disabled first.
+  Multiple allowlisted IDs share this account's library settings and history.
+- `auto_create_users`: create separate accounts for other authenticated HA IDs.
+  These start with reading/download rights only, regardless of CWA's default
+  new-user role. No admin, upload, delete, edit or password-change permissions
+  are granted automatically. Accounts are named `ha_<HA user ID>` and retain
+  their identity after HA username/display-name changes. CWA's default content
+  restrictions are copied at creation. Existing local accounts are never
+  adopted just because their names match. Bindings persist in the
+  `ha_ingress_users` table in `app.db`. When false, only already bound users
+  and allowlisted admins can sign in. Removing an admin ID takes away its
+  admin mapping after restart. A regular bound account manually promoted to
+  CWA admin is denied; grant admin access through the allowlist instead.
+
+The ingress listener accepts connections only from Supervisor's documented
+gateway address `172.30.32.2`, in both login modes. SSO requires a Supervisor
+that sends `X-Remote-User-Id`; missing/invalid IDs are denied, including for
+previously authenticated CWA sessions. There is no fallback to a password,
+remember-me cookie, username header, or anonymous browsing. The adapter uses
+the pinned CWA version's login hooks; upgrading CWA requires retesting them.
+
+In SSO mode, OAuth, Magic Links, Kobo sync and KOReader sync endpoints are
+blocked because they carry separate identities. OPDS through an authenticated
+HA ingress session uses the HA identity, even when Basic credentials are
+supplied; standalone readers cannot authenticate through ingress. Use the
+normal login mode if external devices/direct OPDS are required. CWA logout
+does not log out of HA; the next ingress request authenticates again.
+
+To return to normal CWA login, set `sso.enabled: false` and restart the add-on.
+The adapter does not change saved CWA login settings, passwords or existing
+roles. Keep an independently tested CWA admin password and an add-on backup.
+Automatically created accounts and their bindings remain when SSO is disabled.
+
 ---
 
 ## Volumes
@@ -74,7 +132,7 @@ above are the two paths you're expected to interact with, both under
 
 | Port | Purpose |
 |------|---------|
-| 8083 | Calibre-Web Automated web UI (also mappable directly) |
+| 8083 | CWA web UI; loopback-only while SSO is enabled, otherwise optionally mappable |
 | 8084 | Ingress-only reverse proxy in front of 8083 (internal; not mapped) |
 
 ## Known limitations
@@ -91,5 +149,7 @@ above are the two paths you're expected to interact with, both under
 
 ## Upstream documentation
 
+- [Home Assistant ingress requirements](https://developers.home-assistant.io/docs/apps/presentation/#ingress)
+- [Supervisor ingress identity headers](https://github.com/home-assistant/supervisor/blob/main/supervisor/api/ingress.py)
 - [Calibre-Web Automated wiki](https://github.com/crocodilestick/Calibre-Web-Automated/wiki)
 - [Calibre-Web Automated README](https://github.com/crocodilestick/Calibre-Web-Automated#readme)

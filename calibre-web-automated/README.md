@@ -16,6 +16,11 @@ time).
 
 ## About
 
+Optional Home Assistant ingress SSO can map selected HA user IDs to an
+existing CWA administrator and provision separate reader accounts. It is
+disabled by default. See [SSO configuration and limitations](DOCS.md#option-sso)
+and the [HAOS test checklist](TESTING.md) before enabling it.
+
 CWA bundles a real Calibre install, [kepubify](https://github.com/pgaskin/kepubify)
 and several background workers (ingest watcher, metadata change detector,
 nightly library zipper, checksum backfill, process recovery) on top of the
