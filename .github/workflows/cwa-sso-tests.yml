@@ -42,3 +42,5 @@ jobs:
         run: python -m unittest discover -s calibre-web-automated/tests -v
       - name: Check changed service shell syntax
         run: bash -n calibre-web-automated/rootfs/etc/s6-overlay/s6-rc.d/svc-calibre-web-automated/run
+      - name: Supervisor options permission regression (real root to app UID)
+        run: sudo "$(command -v python)" -m unittest discover -s calibre-web-automated/tests -p test_launch_permissions.py -v

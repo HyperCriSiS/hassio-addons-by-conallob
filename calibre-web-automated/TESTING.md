@@ -10,7 +10,10 @@ python -m unittest discover -s calibre-web-automated/tests -v
 These exercise the add-on adapter with Flask, HTTP Basic authentication,
 CSRF and SQLite. They do not boot the full CWA application or Supervisor.
 The Linux workflow additionally checks nginx's actual trust boundary and
-shell syntax. The CWA source version remains v4.0.6.
+shell syntax. A separate root-run regression reproduces Supervisor's
+root-only `options.json` permissions and verifies that the launcher reads
+options before dropping UID, GID and supplementary groups. CWA is imported
+only after this privilege change. The CWA source version remains v4.0.6.
 
 ## Build and HAOS acceptance (required before upstream submission)
 

@@ -3,6 +3,7 @@
 
 export CALIBRE_DBPATH=/config
 
+# launch.py reads Supervisor options as root, then drops to abc before CWA.
 exec \
     s6-notifyoncheck -d -n 300 -w 1000 -c "nc -z localhost ${CWA_PORT_OVERRIDE:-8083}" \
-        cd /app/calibre-web-automated s6-setuidgid abc python3 /opt/ha-cwa/launch.py
+        cd /app/calibre-web-automated python3 /opt/ha-cwa/launch.py

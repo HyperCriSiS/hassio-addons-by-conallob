@@ -7,9 +7,22 @@ import sys
 from ingress_sso import install, read_options
 
 
-def main():
-    with open('/data/options.json', encoding='utf-8') as handle:
+def load_options_and_drop_privileges(path='/data/options.json', account='abc'):
+    # Supervisor protects options.json from unprivileged processes. Read and
+    # validate it before dropping privileges; never relax that file's mode.
+    with open(path, encoding='utf-8') as handle:
         options = read_options(json.load(handle))
+    import pwd
+    user = pwd.getpwnam(account)
+    os.initgroups(user.pw_name, user.pw_gid)
+    os.setgid(user.pw_gid)
+    os.setuid(user.pw_uid)
+    return options
+
+
+def main():
+    options = load_options_and_drop_privileges()
+    # No CWA code is imported or executed until privileges have been dropped.
     sys.path.insert(0, '/app/calibre-web-automated')
     # Match cps.py's import/working-directory behavior.
     os.chdir('/app/calibre-web-automated')
