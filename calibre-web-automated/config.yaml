@@ -1,14 +1,16 @@
-name: "Calibre-Web Automated"
-description: "Automated Calibre-Web ebook library manager with ingest-folder monitoring, format conversion and metadata enforcement"
-version: "4.0.6"
+name: "Calibre-Web Automated (HyperCriSiS SSO Test)"
+description: "HyperCriSiS test build with optional Home Assistant ingress SSO, based on CWA 4.0.6"
+version: "4.0.6.1"
+stage: experimental
 slug: "calibre-web-automated"
 init: false
 arch:
   - aarch64
   - amd64
 icon: false
-url: "https://github.com/conallob/hassio-addons/tree/master/calibre-web-automated"
+url: "https://github.com/HyperCriSiS/hassio-addons-by-conallob/tree/feature/cwa-ingress-sso/calibre-web-automated"
 panel_icon: "mdi:bookshelf"
+panel_title: "CWA - HyperCriSiS SSO Test"
 startup: services
 ingress: true
 ingress_port: 8084

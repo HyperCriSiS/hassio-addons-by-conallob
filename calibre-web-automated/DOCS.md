@@ -1,4 +1,4 @@
-# Home Assistant Add-on: Calibre-Web Automated
+# Calibre-Web Automated (HyperCriSiS SSO Test)
 
 ## Overview
 
@@ -8,10 +8,10 @@ gets converted, added to the library, checked for a cover, and (optionally)
 converted to Kepub for Kobo sync — no manual `calibredb` or Calibre-Web admin
 steps required.
 
-The add-on's version tracks the upstream [Calibre-Web Automated release](https://github.com/crocodilestick/Calibre-Web-Automated/releases)
-it bundles one-to-one — check `config.yaml`'s `version` (or `build.yaml`'s
-`CWA_VERSION` for the exact git tag fetched at build time) to see which CWA
-release is currently packaged.
+This is HyperCriSiS's experimental SSO test build, based on Conall O'Brien's
+add-on. Add-on version `4.0.6.1` packages upstream CWA `v4.0.6`; the final
+version component is the add-on revision. `build.yaml`'s `CWA_VERSION`
+identifies the upstream source tag.
 
 This add-on runs the upstream CWA application, the real Calibre binaries and
 kepubify unmodified; only the surrounding container (base image, init

@@ -1,4 +1,4 @@
-# Home Assistant Add-on: Calibre-Web Automated
+# Calibre-Web Automated (HyperCriSiS SSO Test)
 
 ![Supports aarch64 Architecture][aarch64-shield]
 ![Supports amd64 Architecture][amd64-shield]
@@ -9,10 +9,10 @@ watched ingest folder, automatic format conversion, cover/metadata
 enforcement and Kepub conversion for Kobo devices, wrapped around a Calibre
 library.
 
-This add-on tracks upstream [Calibre-Web Automated releases](https://github.com/crocodilestick/Calibre-Web-Automated/releases)
-directly — the add-on's `version` field is the CWA release it bundles (see
-`build.yaml`'s `CWA_VERSION` for the exact upstream git tag fetched at build
-time).
+This is HyperCriSiS's experimental SSO test build, based on Conall O'Brien's
+add-on. Add-on version `4.0.6.1` packages upstream CWA `v4.0.6`; the final
+version component identifies the add-on revision. See `build.yaml`'s
+`CWA_VERSION` for the upstream source version.
 
 ## About
 

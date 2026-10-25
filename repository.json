@@ -1,5 +1,5 @@
 {
-  "name": "Conall's Home Assistant Add-ons",
-  "url": "https://github.com/conallob/hassio-addons",
-  "maintainer": "Conall O'Brien <conall@conall.net>"
+  "name": "HyperCriSiS Add-ons (SSO Test)",
+  "url": "https://github.com/HyperCriSiS/hassio-addons-by-conallob/tree/feature/cwa-ingress-sso",
+  "maintainer": "HyperCriSiS"
 }

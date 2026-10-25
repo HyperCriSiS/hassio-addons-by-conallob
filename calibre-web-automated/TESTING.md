@@ -18,7 +18,16 @@ only after this privilege change. The CWA source version remains v4.0.6.
 ## Build and HAOS acceptance (required before upstream submission)
 
 Use a test installation and back up the installed add-on first. This branch
-does not bump the stable version: it is intended for a local test build.
+uses the distinct test name `Calibre-Web Automated (HyperCriSiS SSO Test)`
+and add-on revision `4.0.6.1` (upstream CWA remains `v4.0.6`). The repository
+is named `HyperCriSiS Add-ons (SSO Test)`. Existing installations from this
+branch retain their add-on slug and private data when updated.
+
+For a repository installation, add
+`https://github.com/HyperCriSiS/hassio-addons-by-conallob#feature/cwa-ingress-sso`
+to the HA add-on store. Refresh the store and select the test name above.
+An existing `4.0.6` installation from this branch can update to `4.0.6.1`.
+For a local installation instead:
 Copy this branch's `calibre-web-automated` directory into HA's local add-ons
 directory (`/addons`), refresh the store, and install the local add-on. A
 local installation has its own private state; it does not adopt the installed
