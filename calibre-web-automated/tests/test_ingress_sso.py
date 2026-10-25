@@ -179,6 +179,73 @@ class SSOTest(unittest.TestCase):
         response = self.make_app().test_client().get('/', headers=self.headers(ADMIN_ID))
         self.assertEqual(response.json['role'], 258)
 
+    def test_automatic_ha_admin_needs_no_copied_id_or_auto_creation(self):
+        self.options['admin_users'] = []
+        self.options['auto_create_users'] = False
+        # IDs do not have to be known in advance; ownership is reflected by
+        # Supervisor including system-admin in its effective group list.
+        client = self.make_app().test_client()
+        for uid in (ADMIN_ID, 'c' * 32):
+            headers = self.headers(uid, **{'X-Remote-User-Groups': 'system-users, system-admin'})
+            response = client.get('/', headers=headers)
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.json['name'], 'admin')
+        self.assertEqual(self.db.query(User).count(), 1)
+
+    def test_automatic_regular_user_keeps_separate_reader_account(self):
+        self.options['admin_users'] = []
+        response = self.make_app().test_client().get('/', headers=self.headers(
+            **{'X-Remote-User-Groups': 'system-users', 'X-Remote-User-Name': 'admin'}))
+        self.assertEqual(response.json['name'], 'ha_' + READER_ID)
+        self.assertEqual(response.json['role'], 258)
+
+    def test_missing_malformed_or_similar_groups_never_grant_admin(self):
+        self.options['admin_users'] = []
+        client = self.make_app().test_client()
+        for value in ('', 'admin', 'System-Admin', 'my-system-admin',
+                      'system-administrator', '["system-admin"]',
+                      'system-admin system-users', 'system-admin,,system-users',
+                      'system-admin,invalid group', 'system-admin,'):
+            with self.subTest(groups=value):
+                response = client.get('/', headers=self.headers(
+                    **{'X-Remote-User-Groups': value}))
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(response.json['role'], 258)
+
+    def test_ha_role_revocation_and_promotion_apply_to_next_request(self):
+        self.options['admin_users'] = []
+        client = self.make_app().test_client()
+        admin_headers = self.headers(ADMIN_ID, **{'X-Remote-User-Groups': 'system-admin'})
+        self.assertEqual(client.get('/', headers=admin_headers).json['name'], 'admin')
+        with client.session_transaction() as state:
+            state['_user_id'] = '1'
+        reader = client.get('/', headers=self.headers(ADMIN_ID)).json
+        self.assertEqual(reader['name'], 'ha_' + ADMIN_ID)
+        self.assertEqual(reader['role'], 258)
+        self.assertEqual(client.get('/', headers=admin_headers).json['name'], 'admin')
+        self.assertEqual(client.get('/', headers=self.headers(ADMIN_ID)).json['name'], reader['name'])
+
+    def test_explicit_id_list_preserves_existing_selection(self):
+        client = self.make_app().test_client()
+        # Existing configurations keep working without group headers.
+        self.assertEqual(client.get('/', headers=self.headers(ADMIN_ID)).json['name'], 'admin')
+        headers = self.headers(READER_ID, **{'X-Remote-User-Groups': 'system-admin'})
+        self.assertEqual(client.get('/', headers=headers).json['role'], 258)
+
+    def test_automatic_admin_role_still_requires_trusted_identity(self):
+        self.options['admin_users'] = []
+        client = self.make_app().test_client()
+        for headers in ({'X-Remote-User-Groups': 'system-admin'},
+                        {'X-CWA-Ingress': '1', 'X-Remote-User-Groups': 'system-admin'},
+                        {'X-Remote-User-Id': ADMIN_ID, 'X-Remote-User-Groups': 'system-admin'}):
+            self.assertEqual(client.get('/', headers=headers).status_code, 403)
+
+    def test_automatic_mapping_validates_admin_target_at_startup(self):
+        self.options['admin_users'] = []
+        self.options['admin_account'] = 'missing'
+        with self.assertRaises(ValueError):
+            self.make_app()
+
     def test_invalid_admin_target_fails_startup(self):
         for name in ('missing', 'reader'):
             if name == 'reader':

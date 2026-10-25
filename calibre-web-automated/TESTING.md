@@ -19,14 +19,14 @@ only after this privilege change. The CWA source version remains v4.0.6.
 
 Use a test installation and back up the installed add-on first. This branch
 uses the distinct test name `Calibre-Web Automated (HyperCriSiS SSO Test)`
-and add-on revision `4.0.6.1` (upstream CWA remains `v4.0.6`). The repository
+and add-on revision `4.0.6.2` (upstream CWA remains `v4.0.6`). The repository
 is named `HyperCriSiS Add-ons (SSO Test)`. Existing installations from this
 branch retain their add-on slug and private data when updated.
 
 For a repository installation, add
 `https://github.com/HyperCriSiS/hassio-addons-by-conallob#feature/cwa-ingress-sso`
 to the HA add-on store. Refresh the store and select the test name above.
-An existing `4.0.6` installation from this branch can update to `4.0.6.1`.
+An existing `4.0.6` or `4.0.6.1` installation from this branch can update to `4.0.6.2`.
 For a local installation instead:
 Copy this branch's `calibre-web-automated` directory into HA's local add-ons
 directory (`/addons`), refresh the store, and install the local add-on. A
@@ -37,10 +37,12 @@ Supervisor's rebuild action after replacing its files. Check build/start logs.
 1. With SSO disabled, set up the library and a CWA administrator. Confirm
    password login, a restart, book viewing/download and optional direct access.
    Record the exact CWA admin name and test its password.
-2. Leave the host port for 8083 unset. Enable SSO with your HA **user ID**
-   in `admin_users`, your CWA admin in `admin_account`, and
+2. Leave the host port for 8083 unset. Enable SSO with **`admin_users: []`**
+   (replace any old ID list), your CWA admin in `admin_account`, and
    `auto_create_users: true`. Restart. Opening CWA through HA must show the
-   selected admin without another login. Check static files, redirects,
+   selected admin without another login when logged into HA as an administrator.
+   Test a second HA administrator as well; no ID configuration should be needed.
+   Check static files, redirects,
    uploads and an operation that submits a CSRF-protected form.
 3. Use a separate HA browser session with another HA user who is allowed to
    open this add-on. Confirm a separate `ha_<ID>` account, reading/download
@@ -48,8 +50,11 @@ Supervisor's rebuild action after replacing its files. Check build/start logs.
    account and reading state must remain. Rename this HA user; it must retain
    its own CWA identity. Test switching HA users in the same browser as well.
 4. Disable automatic creation. An existing bound reader must still work;
-   an unseen HA user must receive HTTP 403. Remove an ID from `admin_users`
-   and restart; that ID must no longer reach the CWA admin account.
+   an unseen normal HA user must receive HTTP 403. Revoke HA admin rights for
+   a test user, then open a fresh HA session: that user must no longer reach
+   the CWA admin account. Also verify optional explicit mode: configure one
+   ID in `admin_users`, restart, and confirm other HA admins get reader rights.
+   Restore `admin_users: []` afterward for automatic roles.
 5. From another container/add-on and from the LAN, attempt ports 8083 and
    8084, including forged `X-Remote-User-Id`, `X-CWA-Ingress` and
    `X-Forwarded-For` headers. Port 8083 must not accept network connections;
@@ -60,7 +65,7 @@ Supervisor's rebuild action after replacing its files. Check build/start logs.
 6. Check missing/invalid identity headers at the trusted proxy path: access
    must fail even with a previous CWA admin cookie or Basic credentials.
    OAuth, Magic Links, Kobo and KOReader sync must be denied in SSO mode.
-7. Set an invalid/non-admin `admin_account` with an allowlisted ID: CWA must
+7. Set an invalid/non-admin `admin_account`, including in automatic mode: CWA must
    fail to start. Correct the option and restart to recover.
 8. Disable SSO and restart. Confirm the original CWA admin password still
    works and optional direct access is restored. Confirm saved login settings,

@@ -81,14 +81,16 @@ class NginxTest(unittest.TestCase):
     def test_non_supervisor_denied_even_with_forged_headers(self):
         status, _ = self.request('127.0.0.1', {
             'X-Forwarded-For': '172.30.32.2', 'X-CWA-Ingress': '1',
-            'X-Remote-User-Id': 'a' * 32})
+            'X-Remote-User-Id': 'a' * 32, 'X-Remote-User-Groups': 'system-admin'})
         self.assertEqual(status, 403)
 
     def test_supervisor_identity_forwarded_and_marker_overwritten(self):
         status, body = self.request('172.30.32.2', {
-            'X-CWA-Ingress': 'forged', 'X-Remote-User-Id': 'b' * 32})
+            'X-CWA-Ingress': 'forged', 'X-Remote-User-Id': 'b' * 32,
+            'X-Remote-User-Groups': 'system-users,system-admin'})
         self.assertEqual(status, 200)
         headers = json.loads(body)
         self.assertEqual(headers['X-CWA-Ingress'], '1')
         self.assertEqual(headers['X-Remote-User-Id'], 'b' * 32)
+        self.assertEqual(headers['X-Remote-User-Groups'], 'system-users,system-admin')
         self.assertEqual(headers['X-Script-Name'], '/api/hassio_ingress/test')

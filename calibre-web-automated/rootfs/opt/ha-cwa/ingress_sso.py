@@ -3,6 +3,14 @@
 import re
 
 USER_ID = re.compile(r'[0-9a-f]{32}', re.ASCII)
+GROUP_ID = re.compile(r'[a-z][a-z0-9_-]*', re.ASCII)
+
+
+def is_home_assistant_admin(groups_header):
+    """Accept only complete, comma-separated Supervisor group IDs."""
+    groups = [value.strip() for value in groups_header.split(',')]
+    return (all(GROUP_ID.fullmatch(value) for value in groups)
+            and 'system-admin' in groups)
 
 
 def read_options(options):
@@ -35,13 +43,16 @@ def install(app, config, constants, ub, usermanagement, options):
                      Column('user_id', Integer, nullable=False, unique=True))
     bindings.create(ub.session.get_bind(), checkfirst=True)
     admin = ub.session.query(ub.User).filter_by(name=options['admin_account']).first()
-    if options['admin_users'] and (admin is None or not admin.role_admin()
-                                   or admin.role_anonymous()):
+    if admin is None or not admin.role_admin() or admin.role_anonymous():
         raise ValueError('sso.admin_account must identify an existing CWA administrator')
     admin_id = admin.id if admin is not None else None
 
-    def resolve_user(ha_id):
-        if ha_id in options['admin_users']:
+    def resolve_user(ha_id, groups_header):
+        # Preserve explicit ID mappings on upgrade. An empty list selects
+        # automatic HA roles, without requiring users to copy an ID.
+        is_admin = (ha_id in options['admin_users'] if options['admin_users']
+                    else is_home_assistant_admin(groups_header))
+        if is_admin:
             user = ub.session.get(ub.User, admin_id)
             if user is None or not user.role_admin() or user.role_anonymous():
                 abort(403)
@@ -50,7 +61,7 @@ def install(app, config, constants, ub, usermanagement, options):
             select(bindings.c.user_id).where(bindings.c.ha_id == ha_id)).scalar()
         if user_id is not None:
             user = ub.session.get(ub.User, user_id)
-            # Admin rights are granted exclusively through the explicit allowlist.
+            # Local role changes cannot bypass the HA role/explicit ID policy.
             if user is None or user.role_admin() or user.role_anonymous():
                 abort(403)
             return user
@@ -98,7 +109,7 @@ def install(app, config, constants, ub, usermanagement, options):
                 or request.path.startswith('/login/')
                 or (request.path == '/login' and request.method == 'POST')):
             abort(403)
-        user = resolve_user(ha_id)
+        user = resolve_user(ha_id, request.headers.get('X-Remote-User-Groups', ''))
         # Keep CSRF tokens and UI state; remove only local login credentials.
         for key in ('_user_id', '_id', '_random', '_remember_seconds'):
             session.pop(key, None)

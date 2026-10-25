@@ -23,6 +23,11 @@ def load_options_and_drop_privileges(path='/data/options.json', account='abc'):
 def main():
     options = load_options_and_drop_privileges()
     # No CWA code is imported or executed until privileges have been dropped.
+    if options['enabled']:
+        policy = 'explicit ID list' if options['admin_users'] else 'automatic Home Assistant roles'
+        print('[ha-cwa] Ingress SSO enabled; admin policy: ' + policy, flush=True)
+    else:
+        print('[ha-cwa] Ingress SSO disabled; using CWA login', flush=True)
     sys.path.insert(0, '/app/calibre-web-automated')
     # Match cps.py's import/working-directory behavior.
     os.chdir('/app/calibre-web-automated')

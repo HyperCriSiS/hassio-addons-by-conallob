@@ -10,14 +10,16 @@ enforcement and Kepub conversion for Kobo devices, wrapped around a Calibre
 library.
 
 This is HyperCriSiS's experimental SSO test build, based on Conall O'Brien's
-add-on. Add-on version `4.0.6.1` packages upstream CWA `v4.0.6`; the final
+add-on. Add-on version `4.0.6.2` packages upstream CWA `v4.0.6`; the final
 version component identifies the add-on revision. See `build.yaml`'s
 `CWA_VERSION` for the upstream source version.
 
 ## About
 
-Optional Home Assistant ingress SSO can map selected HA user IDs to an
-existing CWA administrator and provision separate reader accounts. It is
+Optional Home Assistant ingress SSO automatically maps HA administrators to an
+existing CWA administrator and can provision separate reader accounts for
+other HA users. No user ID needs to be copied; an explicit ID list remains
+available for individual selection. It is
 disabled by default. See [SSO configuration and limitations](DOCS.md#option-sso)
 and the [HAOS test checklist](TESTING.md) before enabling it.
 

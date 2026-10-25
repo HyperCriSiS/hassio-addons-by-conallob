@@ -1,6 +1,6 @@
 name: "Calibre-Web Automated (HyperCriSiS SSO Test)"
 description: "HyperCriSiS test build with optional Home Assistant ingress SSO, based on CWA 4.0.6"
-version: "4.0.6.1"
+version: "4.0.6.2"
 stage: experimental
 slug: "calibre-web-automated"
 init: false
@@ -11,6 +11,7 @@ icon: false
 url: "https://github.com/HyperCriSiS/hassio-addons-by-conallob/tree/feature/cwa-ingress-sso/calibre-web-automated"
 panel_icon: "mdi:bookshelf"
 panel_title: "CWA - HyperCriSiS SSO Test"
+panel_admin: false
 startup: services
 ingress: true
 ingress_port: 8084

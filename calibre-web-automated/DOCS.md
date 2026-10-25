@@ -9,7 +9,7 @@ converted to Kepub for Kobo sync — no manual `calibredb` or Calibre-Web admin
 steps required.
 
 This is HyperCriSiS's experimental SSO test build, based on Conall O'Brien's
-add-on. Add-on version `4.0.6.1` packages upstream CWA `v4.0.6`; the final
+add-on. Add-on version `4.0.6.2` packages upstream CWA `v4.0.6`; the final
 version component is the add-on revision. `build.yaml`'s `CWA_VERSION`
 identifies the upstream source tag.
 
@@ -61,8 +61,7 @@ upgrading does not change the existing login or optional direct access.
 ```yaml
 sso:
   enabled: true
-  admin_users:
-    - "0123456789abcdef0123456789abcdef"
+  admin_users: []
   admin_account: "admin"
   auto_create_users: true
 ```
@@ -70,16 +69,23 @@ sso:
 - `enabled`: authenticate every request exclusively through HA ingress.
   CWA then binds to `127.0.0.1:8083`; even a configured host port mapping
   cannot expose that backend. Leave the optional network port unset.
-- `admin_users`: **Home Assistant user IDs, not usernames or display names**.
-  Find the ID in the user's detail view under Settings → People → Users
-  (advanced mode may be needed). The ID is 32 lowercase hexadecimal characters.
-  Supervisor supplies it as `X-Remote-User-Id`. IDs keep the binding stable
-  across renames and avoid granting access when a username is reused.
-  `X-Remote-User-Name` is deliberately not an authorization key.
+- `admin_users`: leave this empty (`[]`) for **automatic Home Assistant roles**.
+  All HA administrators (including the owner) use the CWA administrator below;
+  other HA users get separate reader accounts when automatic creation is enabled.
+  No ID needs to be copied. Supervisor must supply `X-Remote-User-Groups` with
+  the exact group `system-admin`. Missing, malformed or non-admin groups never
+  grant admin access. This requires a Supervisor version that provides groups;
+  if unavailable, use normal login or the explicit mapping below.
+  For an optional explicit selection, enter HA user IDs here instead. A nonempty
+  list takes precedence over HA roles, preserving existing configurations on
+  upgrade. Only those IDs receive CWA admin access, even if other users are HA
+  admins. IDs must be 32 lowercase hexadecimal characters, not usernames or
+  display names. Internal account bindings always use Supervisor's stable
+  `X-Remote-User-Id`, including in automatic mode.
 - `admin_account`: exact name of an **existing CWA administrator**. All
-  allowlisted HA IDs use this account. SSO does not create/promote this admin;
+  selected HA administrators use this account. SSO does not create/promote this admin;
   an invalid target prevents startup. Configure it with SSO disabled first.
-  Multiple allowlisted IDs share this account's library settings and history.
+  Multiple HA administrators share this account's library settings and history.
 - `auto_create_users`: create separate accounts for other authenticated HA IDs.
   These start with reading/download rights only, regardless of CWA's default
   new-user role. No admin, upload, delete, edit or password-change permissions
@@ -88,9 +94,19 @@ sso:
   restrictions are copied at creation. Existing local accounts are never
   adopted just because their names match. Bindings persist in the
   `ha_ingress_users` table in `app.db`. When false, only already bound users
-  and allowlisted admins can sign in. Removing an admin ID takes away its
-  admin mapping after restart. A regular bound account manually promoted to
-  CWA admin is denied; grant admin access through the allowlist instead.
+  and selected admins can sign in. In automatic mode, HA role changes apply
+  when Supervisor forwards the updated groups; a CWA cookie cannot retain admin
+  rights once the header no longer includes that role. If Supervisor still
+  caches the prior role, sign out of HA and open a fresh HA session to retest.
+  In explicit mode, changing the ID list requires an add-on restart. Clearing
+  the last ID switches back to automatic HA roles; it does not deny all admins.
+  A regular bound account manually promoted to CWA admin is denied; grant admin
+  access through HA roles or the explicit list instead.
+
+After updating from an earlier test build with IDs configured, replace the
+existing `admin_users` value with `[]`, save and restart to use automatic roles.
+The add-on panel allows non-admin HA users; CWA's own permissions limit them
+to their account's allowed actions. HA users must still be authenticated.
 
 The ingress listener accepts connections only from Supervisor's documented
 gateway address `172.30.32.2`, in both login modes. SSO requires a Supervisor
